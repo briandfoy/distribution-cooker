@@ -48,7 +48,7 @@ sub run
 		);
 
 	$self->dist(
-		$self->module_to_distname( $module )
+		$self->module_to_distname( $self->module )
 		);
 		
 	$self->cook;
@@ -74,6 +74,7 @@ Initialize the object.
 
 sub init
 	{
+	1;
 	}
 	
 =item pre_run
@@ -89,9 +90,9 @@ the object but before it initializes it.
 
 sub pre_run  { 1 }
 
-=item pre_run
+=item post_run
 
-Method to call before run() starts its work. run() will
+Method to call after run() ends its work. run() will
 call this for you. By default this is a no-op, but you
 can redefine it or override it in a subclass.
 
@@ -111,6 +112,8 @@ sub cook
 	my( $module, $dist ) = map { $_[0]->$_() } qw( module dist );
 
 	( my $file = $module . ".pm" ) =~ s/.*:://; 
+	
+	my $cwd = cwd();
 	
 	system 
 		join " ",
@@ -185,6 +188,8 @@ sub prompt
 	chomp $line;
 	$line;
 	}
+
+=back
 
 =head1 TO DO
 
