@@ -25,5 +25,4 @@ WriteMakefile(
 		},
 
 	clean  => { FILES    => q|[% module_dist %]-*| },
-
 	);

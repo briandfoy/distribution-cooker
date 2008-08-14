@@ -49,6 +49,8 @@ sub run
 		$module || prompt( "Module name> " ) 
 		);
 
+	croak( "No module specified!" ) unless $self->module;
+	
 	$self->dist(
 		$self->module_to_distname( $self->module )
 		);
@@ -57,7 +59,7 @@ sub run
 
 	$self->post_run;
 	
-	1;
+	$self;
 	}	
 
 =item new
