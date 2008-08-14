@@ -38,26 +38,52 @@ Calls pre-run, collects information about
 
 sub run
 	{
-	$_[0]->pre_run;
+	my $self = $_[0]->new;
+	$self->init;
 	
-	my $module = shift || prompt( "Module name> " );
+	$self->pre_run;
+	
+	$self->module( 
+		shift || prompt( "Module name> " ) 
+		);
 
-	my $dist   = $_[0]->module_to_distname( $module )
-	
-	my $cwd    = catfile( cwd(), $dist );
-	
+	$self->dist(
+		$self->module_to_distname( $module )
+		);
+		
 	$self->cook;
 
-	$_[0]->post_run;
+	$self->post_run;
 	
 	1;
 	}	
 
+=item new
+
+Create the bare object.
+
+=cut
+
+sub new { bless {}, $_[0] }
+	
+=item init
+
+Initialize the object. 
+
+=cut
+
+sub init
+	{
+	}
+	
 =item pre_run
 
 Method to call before run() starts its work. run() will
 call this for you. By default this is a no-op, but you
 can redefine it or override it in a subclass.
+
+run() calls this method immediately after it creates
+the object but before it initializes it.
 
 =cut
 
@@ -82,7 +108,9 @@ Toolkit, but you can make a subclass to override it.
 
 sub cook
 	{
-	my $self = shift;
+	my( $module, $dist ) = map { $_[0]->$_() } qw( module dist );
+
+	( my $file = $module . ".pm" ) =~ s/.*:://; 
 	
 	system 
 		join " ",
@@ -101,7 +129,34 @@ sub cook
 		catfile( $dist, 'lib', $file );
 	}
 
-=item
+=item module( [ MODULE_NAME ] )
+
+Return the module name. With an argument, set the module name.
+
+=cut
+
+sub module
+	{
+	$_[0]->{module} = $_[1] if defined $_[1];
+	$_[0]->{module};
+	}
+
+=item dist( [ DIST_NAME ] )
+
+Return the module name. With an argument, set the module name.
+
+=cut
+
+sub dist
+	{
+	$_[0]->{dist} = $_[1] if defined $_[1];
+	$_[0]->{dist};
+	}
+
+=item module_to_distname( MODULE_NAME )
+
+Take a module name, such as C<Foo::Bar>, and turn it into
+a distribution name, such as C<Foo-Bar>.
 
 =cut
 
