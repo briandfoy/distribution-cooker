@@ -38,13 +38,15 @@ Calls pre-run, collects information about
 
 sub run
 	{
-	my $self = $_[0]->new;
+	my( $class, $module ) = @_;
+	
+	my $self = $class->new;
 	$self->init;
 	
 	$self->pre_run;
 	
 	$self->module( 
-		shift || prompt( "Module name> " ) 
+		$module || prompt( "Module name> " ) 
 		);
 
 	$self->dist(
@@ -110,9 +112,12 @@ Toolkit, but you can make a subclass to override it.
 sub cook
 	{
 	my( $module, $dist ) = map { $_[0]->$_() } qw( module dist );
-
-	( my $file = $module . ".pm" ) =~ s/.*:://; 
 	
+	mkdir $dist, 0755 or die "mkdir $dist: $!";
+	chdir $dist or die "chdir $dist: $!";
+	
+	( my $file = $module . ".pm" ) =~ s/.*:://; 
+		
 	my $cwd = cwd();
 	
 	system 
@@ -127,9 +132,9 @@ sub cook
 	
 	( my $base = $module ) =~ s/.*:://;
 	
-	rename 
-		catfile( $dist, 'lib', 'Foo.pm' ),
-		catfile( $dist, 'lib', $file );
+	rename
+		catfile( 'lib', 'Foo.pm' ),
+		catfile( 'lib', $file ) or die "rename: $!";
 	}
 
 =item module( [ MODULE_NAME ] )
