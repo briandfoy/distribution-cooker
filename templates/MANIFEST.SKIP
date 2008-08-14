@@ -1,4 +1,6 @@
 \.cvsignore
+\.svnignore
+\.git
 \.releaserc
 \.lwpcookies
 Makefile$

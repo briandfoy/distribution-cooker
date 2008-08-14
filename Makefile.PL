@@ -20,6 +20,8 @@ WriteMakefile(
 	'PM'           => {
 		'lib/Cooker.pm'         => '$(INST_LIBDIR)/Cooker.pm',
 		},
+		
+	'DIR' => [], # do not look in templates for Makefile.PL
 
 	'MAN3PODS'     => {
 		'lib/Cooker.pm' => '$(INST_MAN3DIR)/Distribution::Cooker.3',
