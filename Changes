@@ -1,0 +1,7 @@
+0.10_01 - Thu Aug 14 22:57:09 2008
+	* This is the modulino version of my module_cooker
+	script, complete with my set of templates.
+	* If you want to use this, you should develop your
+	own templates, and probably write a subclass for your
+	own use.
+
