@@ -8,11 +8,11 @@ no warnings;
 use subs qw();
 use vars qw($VERSION);
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 =head1 NAME
 
-Distribution::Cooker - This is the description
+Distribution::Cooker - Create a module directory from your own templates
 
 =head1 SYNOPSIS
 
@@ -24,6 +24,7 @@ Distribution::Cooker - This is the description
 
 =cut
 
+use Carp qw(croak carp);
 use Cwd;
 use Config::IniFiles;
 use File::Spec::Functions qw(catfile);
@@ -32,7 +33,8 @@ __PACKAGE__->run( $ARGV[0] ) unless caller;
 
 =item run( MODULE_NAME )
 
-Calls pre-run, collects information about 
+Calls pre-run, collects information about the module you want to
+create, cooks the templates, and calls post-run.
 
 =cut
 
@@ -64,7 +66,8 @@ sub run
 
 =item new
 
-Create the bare object.
+Create the bare object. There's nothing fancy here, but if you need
+something more powerful you can create a subclass.
 
 =cut
 
@@ -72,7 +75,8 @@ sub new { bless {}, $_[0] }
 	
 =item init
 
-Initialize the object. 
+Initialize the object. There's nothing fancy here, but if you need
+something more powerful you can create a subclass.
 
 =cut
 
@@ -109,36 +113,116 @@ sub post_run { 1 }
 Take the templates and cook them. This version uses Template
 Toolkit, but you can make a subclass to override it.
 
+I assume my own favorite values, and haven't made these
+customizable yet.
+
+=over 4
+
+=item ttree (from Template) is in "/usr/local/bin/ttree"
+
+=item Your distribution template directory is ~/.templates/dist_cooker
+
+=item Your module template name is "lib/Foo.pm"
+
+=back
+
+When C<cook> processes the templates, it provides definitions for
+these template variables:
+
+=over 4
+
+=item module      => the package name (Foo::Bar)
+
+=item module_file => module file name (Bar.pm)
+
+=item module_dist => the distribution name (Foo-Bar)
+
+=back
+
+While processing the templates, C<cook> ignores F<.git>, F<.svn>, and
+F<CVS> directories.
+
 =cut
 
 sub cook
 	{
 	my( $module, $dist ) = map { $_[0]->$_() } qw( module dist );
 	
-	mkdir $dist, 0755 or die "mkdir $dist: $!";
-	chdir $dist or die "chdir $dist: $!";
+	mkdir $dist, 0755 or croak "mkdir $dist: $!";
+	chdir $dist       or croak "chdir $dist: $!";
 	
 	( my $file = $module . ".pm" ) =~ s/.*:://; 
 		
 	my $cwd = cwd();
 	
-	system 
-		join " ",
-		"/usr/local/bin/ttree"        ,
-		"-s ~/.templates/modules"     ,
-		qq|-d "$cwd"|                 ,
-		"-define module='$module'"    ,
-		"-define module_file='$file'" ,
-		"-define module_dist='$dist'"
+	system $_[0]->ttree_command                 ,
+		"-s", $_[0]->distribution_template_dir  ,
+		"-d", cwd(),                            ,
+		"-define", qq|module='$module'|         ,
+		"-define", qq|module_file='$file'|      ,
+		"-define", qq|module_dist='$dist'|      ,
+		q{--ignore=(\\.git|\\.svn)\\b}          ,
 		;
 	
 	( my $base = $module ) =~ s/.*:://;
 	
 	rename
-		catfile( 'lib', 'Foo.pm' ),
-		catfile( 'lib', $file ) or die "rename: $!";
+		catfile( 'lib', $_[0]->module_template_basename ),
+		catfile( 'lib', $file ) or croak "Could not rename module template: $!";
 	}
 
+=item ttree_command
+
+Returns the name for the ttree command from template, and croaks if that
+path does not exist or is not executable.
+
+The default path is F</usr/local/bin/ttree>. You can override this in
+a subclass.
+
+=cut
+
+sub ttree_command
+	{
+	my $path = "/usr/local/bin/ttree";
+	
+	croak "Didn't find ttree at $path!\n" unless -e $path;
+	croak "$path is not executable!\n"    unless -x $path;
+
+	$path;
+	}
+
+=item distribution_template_dir
+
+Returns the name of the directory that contains the distribution templates.
+
+The default path is F<~/.templates/modules>. You can override this in
+a subclass.
+
+=cut
+
+sub distribution_template_dir
+	{
+	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
+	
+	croak "Couldn't find templates at $path!\n" unless -d $path;
+
+	$path;
+	}
+
+=item module_template_basename
+
+Returns the name of the file that is the module.
+
+The default name is F<Foo.pm>. You can override this in
+a subclass.
+
+=cut
+
+sub module_template_basename
+	{
+	"Foo.pm";
+	}
+	
 =item module( [ MODULE_NAME ] )
 
 Return the module name. With an argument, set the module name.
@@ -200,12 +284,19 @@ sub prompt
 
 =head1 TO DO
 
+Right now, C<Distribution::Cooker> uses the defaults that I like, but
+that should come from a configuration file.
 
 =head1 SEE ALSO
 
+Other modules, such as C<Module:Starter>, do a similar job but don't give
+you as much flexibility with your templates.
 
 =head1 SOURCE AVAILABILITY
 
+This module is in Github:
+
+	http://github.com/briandfoy/distribution--cooker/
 
 =head1 AUTHOR
 
@@ -213,7 +304,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2008, brian d foy, All Rights Reserved.
+Copyright (c) 2008-2009, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 
