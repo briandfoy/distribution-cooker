@@ -30,10 +30,13 @@ use File::Spec::Functions qw(catfile);
 
 __PACKAGE__->run( $ARGV[0] ) unless caller;
 
-=item run( MODULE_NAME )
+=item run( [ MODULE_NAME, [ DESCRIPTION ] ] )
 
 Calls pre-run, collects information about the module you want to
 create, cooks the templates, and calls post-run.
+
+If you don't specify the module name, it prompts you. If you don't
+specify a description, it prompts you.
 
 =cut
 
@@ -129,11 +132,17 @@ these template variables:
 
 =over 4
 
+=item description => the module description
+
 =item module      => the package name (Foo::Bar)
+
+=item module_dist => the distribution name (Foo-Bar)
 
 =item module_file => module file name (Bar.pm)
 
-=item module_dist => the distribution name (Foo-Bar)
+=item module_path => module path under lib/ (Foo/Bar.pm)
+
+=item year        => the current year
 
 =back
 
@@ -142,23 +151,24 @@ F<CVS> directories.
 
 =cut
 
-sub cook
-	{
-	my( $module, $dist ) = map { $_[0]->$_() } qw( module dist );
-	
+sub cook {
+	my( $module, $dist, $file ) =
+		map { $_[0]->$_() } qw( module dist module_path );
+
 	mkdir $dist, 0755 or croak "mkdir $dist: $!";
 	chdir $dist       or croak "chdir $dist: $!";
-	
-	( my $file = $module . ".pm" ) =~ s/.*:://; 
-		
+
 	my $cwd = cwd();
-	
+	my $year = ( localtime )[5] + 1900;
+
 	system $_[0]->ttree_command                 ,
 		"-s", $_[0]->distribution_template_dir  ,
 		"-d", cwd(),                            ,
 		"-define", qq|module='$module'|         ,
 		"-define", qq|module_file='$file'|      ,
 		"-define", qq|module_dist='$dist'|      ,
+		"-define", qq|year='$year'|             ,
+		"-define", qq|module_path='$path'|      ,
 		q{--ignore=(\\.git|\\.svn)\\b}          ,
 		;
 
@@ -206,6 +216,20 @@ sub distribution_template_dir {
 	$path;
 	}
 
+=item description
+
+Returns the description of the module.
+
+The default name is C<TODO: describe this module>. You can override
+this in a subclass.
+
+=cut
+
+sub description {
+	$_[0]->{module} = $_[1] if defined $_[1];
+	$_[0]->{module} || 'TODO: describe this module'
+	}
+
 =item module_template_basename
 
 Returns the name of the file that is the module.
@@ -217,7 +241,7 @@ The default name is F<Foo.pm>. You can override this in a subclass.
 sub module_template_basename {
 	"Foo.pm";
 	}
-	
+
 =item module( [ MODULE_NAME ] )
 
 Return the module name. With an argument, set the module name.
@@ -229,9 +253,23 @@ sub module {
 	$_[0]->{module};
 	}
 
+=item module_path()
+
+Return the module path under F<lib/>. You must have set C<module>
+already.
+
+=cut
+
+sub module_path {
+	my @parts = split /::/, $_[0]->{module};
+	return unless @parts;
+	$parts[-1] .= '.pm';
+	my $path = catfile( @parts );
+	}
+
 =item dist( [ DIST_NAME ] )
 
-Return the module name. With an argument, set the module name.
+Return the dist name. With an argument, set the module name.
 
 =cut
 
@@ -242,8 +280,8 @@ sub dist {
 
 =item module_to_distname( MODULE_NAME )
 
-Take a module name, such as C<Foo::Bar>, and turn it into
-a distribution name, such as C<Foo-Bar>.
+Take a module name, such as C<Foo::Bar>, and turn it into a
+distribution name, such as C<Foo-Bar>.
 
 =cut
 
@@ -253,7 +291,7 @@ sub module_to_distname {
 	my $dist   = $module; $dist =~ s/::/-/g;
 	my $file   = $module; $file =~ s/.*:://; $file .= ".pm";
 
-	return $dist;	
+	return $dist;
 	}
 
 =item prompt( MESSAGE )
