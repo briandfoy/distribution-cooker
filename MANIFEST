@@ -5,6 +5,7 @@ LICENSE
 Makefile.PL
 MANIFEST			This list of files
 README
+script/dist_cooker
 t/dist.t
 t/init.t
 t/load.t
