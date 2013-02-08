@@ -37,31 +37,33 @@ create, cooks the templates, and calls post-run.
 
 =cut
 
-sub run
-	{
-	my( $class, $module ) = @_;
-	
+sub run {
+	my( $class, $module, $description ) = @_;
+
 	my $self = $class->new;
 	$self->init;
-	
+
 	$self->pre_run;
-	
-	$self->module( 
-		$module || prompt( "Module name> " ) 
+
+	$self->module(
+		$module || prompt( "Module name> " )
+		);
+	croak( "No module specified!" ) unless $self->module;
+
+	$self->description(
+		$description || prompt( "Description> " )
 		);
 
-	croak( "No module specified!" ) unless $self->module;
-	
 	$self->dist(
 		$self->module_to_distname( $self->module )
 		);
-		
+
 	$self->cook;
 
 	$self->post_run;
-	
+
 	$self;
-	}	
+	}
 
 =item new
 
@@ -71,7 +73,7 @@ something more powerful you can create a subclass.
 =cut
 
 sub new { bless {}, $_[0] }
-	
+
 =item init
 
 Initialize the object. There's nothing fancy here, but if you need
@@ -79,11 +81,8 @@ something more powerful you can create a subclass.
 
 =cut
 
-sub init
-	{
-	1;
-	}
-	
+sub init { 1 }
+
 =item pre_run
 
 Method to call before run() starts its work. run() will
@@ -180,8 +179,7 @@ a subclass.
 
 =cut
 
-sub ttree_command
-	{
+sub ttree_command {
 	my $path = "/usr/local/bin/ttree";
 	
 	croak "Didn't find ttree at $path!\n" unless -e $path;
@@ -199,8 +197,7 @@ a subclass.
 
 =cut
 
-sub distribution_template_dir
-	{
+sub distribution_template_dir {
 	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
 	
 	croak "Couldn't find templates at $path!\n" unless -d $path;
@@ -217,8 +214,7 @@ a subclass.
 
 =cut
 
-sub module_template_basename
-	{
+sub module_template_basename {
 	"Foo.pm";
 	}
 	
@@ -228,8 +224,7 @@ Return the module name. With an argument, set the module name.
 
 =cut
 
-sub module
-	{
+sub module {
 	$_[0]->{module} = $_[1] if defined $_[1];
 	$_[0]->{module};
 	}
@@ -240,8 +235,7 @@ Return the module name. With an argument, set the module name.
 
 =cut
 
-sub dist
-	{
+sub dist {
 	$_[0]->{dist} = $_[1] if defined $_[1];
 	$_[0]->{dist};
 	}
@@ -253,8 +247,7 @@ a distribution name, such as C<Foo-Bar>.
 
 =cut
 
-sub module_to_distname
-	{
+sub module_to_distname {
 	my( $self, $module ) = @_;
 	
 	my $dist   = $module; $dist =~ s/::/-/g;
@@ -268,9 +261,8 @@ sub module_to_distname
 Show the user MESSAGE, grap a line from STDIN, and return it.
 
 =cut
-	
-sub prompt
-	{
+
+sub prompt {
 	print join "\n", @_;
 	print "> ";
 	

@@ -11,7 +11,7 @@ $VERSION = '0.11';
 
 =head1 NAME
 
-[% module %] - This is the description
+[% module %] - [% description %]
 
 =head1 SYNOPSIS
 
@@ -27,8 +27,7 @@ $VERSION = '0.11';
 
 =cut
 
-sub new
-	{
+sub new {
 	
 	}
 	
@@ -36,8 +35,7 @@ sub new
 
 =cut
 
-sub init
-	{
+sub init {
 	
 	}
 
