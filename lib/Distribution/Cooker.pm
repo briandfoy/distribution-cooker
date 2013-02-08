@@ -85,12 +85,12 @@ sub init { 1 }
 
 =item pre_run
 
-Method to call before run() starts its work. run() will
-call this for you. By default this is a no-op, but you
-can redefine it or override it in a subclass.
+Method to call before run() starts its work. run() will call this for
+you. By default this is a no-op, but you can redefine it or override
+it in a subclass.
 
-run() calls this method immediately after it creates
-the object but before it initializes it.
+run() calls this method immediately after it creates the object but
+before it initializes it.
 
 =cut
 
@@ -98,9 +98,9 @@ sub pre_run  { 1 }
 
 =item post_run
 
-Method to call after run() ends its work. run() will
-call this for you. By default this is a no-op, but you
-can redefine it or override it in a subclass.
+Method to call after C<run()> ends its work. C<run()> calls this for
+you. By default this is a no-op, but you can redefine it or override
+it in a subclass.
 
 =cut
 
@@ -161,9 +161,9 @@ sub cook
 		"-define", qq|module_dist='$dist'|      ,
 		q{--ignore=(\\.git|\\.svn)\\b}          ,
 		;
-	
+
 	( my $base = $module ) =~ s/.*:://;
-	
+
 	rename
 		catfile( 'lib', $_[0]->module_template_basename ),
 		catfile( 'lib', $file ) or croak "Could not rename module template: $!";
@@ -171,8 +171,8 @@ sub cook
 
 =item ttree_command
 
-Returns the name for the ttree command from template, and croaks if that
-path does not exist or is not executable.
+Returns the name for the ttree command from template, and croaks if
+that path does not exist or is not executable.
 
 The default path is F</usr/local/bin/ttree>. You can override this in
 a subclass.
@@ -181,7 +181,7 @@ a subclass.
 
 sub ttree_command {
 	my $path = "/usr/local/bin/ttree";
-	
+
 	croak "Didn't find ttree at $path!\n" unless -e $path;
 	croak "$path is not executable!\n"    unless -x $path;
 
@@ -190,7 +190,8 @@ sub ttree_command {
 
 =item distribution_template_dir
 
-Returns the name of the directory that contains the distribution templates.
+Returns the name of the directory that contains the distribution
+templates.
 
 The default path is F<~/.templates/modules>. You can override this in
 a subclass.
@@ -199,7 +200,7 @@ a subclass.
 
 sub distribution_template_dir {
 	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
-	
+
 	croak "Couldn't find templates at $path!\n" unless -d $path;
 
 	$path;
@@ -209,8 +210,7 @@ sub distribution_template_dir {
 
 Returns the name of the file that is the module.
 
-The default name is F<Foo.pm>. You can override this in
-a subclass.
+The default name is F<Foo.pm>. You can override this in a subclass.
 
 =cut
 
@@ -249,7 +249,7 @@ a distribution name, such as C<Foo-Bar>.
 
 sub module_to_distname {
 	my( $self, $module ) = @_;
-	
+
 	my $dist   = $module; $dist =~ s/::/-/g;
 	my $file   = $module; $file =~ s/.*:://; $file .= ".pm";
 
@@ -265,7 +265,7 @@ Show the user MESSAGE, grap a line from STDIN, and return it.
 sub prompt {
 	print join "\n", @_;
 	print "> ";
-	
+
 	my $line = <STDIN>;
 	chomp $line;
 	$line;
@@ -280,8 +280,8 @@ that should come from a configuration file.
 
 =head1 SEE ALSO
 
-Other modules, such as C<Module:Starter>, do a similar job but don't give
-you as much flexibility with your templates.
+Other modules, such as C<Module:Starter>, do a similar job but don't
+give you as much flexibility with your templates.
 
 =head1 SOURCE AVAILABILITY
 
