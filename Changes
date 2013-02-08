@@ -5,6 +5,11 @@
 	own templates, and probably write a subclass for your
 	own use.
 
+1.01 - Thu Feb  7 21:49:15 2013
+	* Rename the module file to the conventional location under
+	lib/
+	* Provide a template variable for the year
+
 0.11 - Tue Oct 28 17:20:38 2008
 	* Bump to a release version.
 
