@@ -3,7 +3,7 @@
 \.lwpcookies
 Makefile$
 \.DS_Store
-\.bak
+\.bak$
 \.tar$
 \.gz$
 \.tgz$
@@ -19,4 +19,4 @@ t/cover_db*
 ^cover_db\b
 \.gitignore
 \.svnignore
-.git
+\.git\b
