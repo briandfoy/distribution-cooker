@@ -223,8 +223,8 @@ this in a subclass.
 =cut
 
 sub description {
-	$_[0]->{module} = $_[1] if defined $_[1];
-	$_[0]->{module} || 'TODO: describe this module'
+	$_[0]->{description} = $_[1] if defined $_[1];
+	$_[0]->{description} || 'TODO: describe this module'
 	}
 
 =item module_template_basename
