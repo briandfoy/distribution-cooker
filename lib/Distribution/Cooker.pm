@@ -1,4 +1,3 @@
-# $Id$
 package Distribution::Cooker;
 use strict;
 
