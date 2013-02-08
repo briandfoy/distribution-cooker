@@ -17,8 +17,8 @@ dist_cooker - create a Perl distribution skeleton from personal templates
 
 =head1 DESCRIPTION
 
-C<dist_cooker> builds a Perl distribution skeleton from template files. You
-create the templates however you like.
+C<dist_cooker> builds a Perl distribution skeleton from template
+files. You create the templates however you like.
 
 By default, I assume my own favorite values, and haven't made these
 customizable yet.
@@ -59,8 +59,8 @@ the defaults without having to write a subclass.
 
 =head1 SEE ALSO
 
-Other modules, such as C<Module:Starter>, do a similar job but don't give
-you as much flexibility with your templates.
+Other modules, such as C<Module:Starter>, do a similar job but don't
+give you as much flexibility with your templates.
 
 =head1 SOURCE AVAILABILITY
 
