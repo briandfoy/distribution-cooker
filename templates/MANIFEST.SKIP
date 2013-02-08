@@ -1,10 +1,8 @@
-\.cvsignore
-\.svnignore
 \.git
 \.releaserc
 \.lwpcookies
 Makefile$
-\.DS_Store
+\.DS_Store$
 \.bak
 \.tar$
 \.gz$
@@ -12,12 +10,9 @@ Makefile$
 \.zip$
 MANIFEST\.
 blib/
-CVS
-\.svn
-pm_to_blib
+pm_to_blib\b
 \.old$
-t/\d
+t/\d\b
 t/cover_db*
 ^cover_db\b
-\.gitignore
-\.svnignore
+\.gitignore\b
