@@ -7,3 +7,5 @@ cover_db
 Dist*
 *.bak
 .DS_Store
+MYMETA.json
+MYMETA.yml
