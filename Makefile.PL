@@ -7,7 +7,7 @@ eval "use Test::Manifest 1.21";
 WriteMakefile(
 	'NAME'	       => 'Distribution::Cooker',
 	'ABSTRACT'     => 'Create a module directory from your own templates',
-	'VERSION_FROM' => 'lib/Cooker.pm',
+	'VERSION_FROM' => 'lib/Distribution/Cooker.pm',
 	'LICENSE'      => 'perl',
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
@@ -17,17 +17,9 @@ WriteMakefile(
 		'Template'         => '0',
 		},
 
-	'PM'           => {
-		'lib/Cooker.pm'         => '$(INST_LIBDIR)/Cooker.pm',
-		},
-		
 	'EXE_FILES' => [ 'script/dist_cooker' ],
 		
 	'DIR' => [], # do not look in templates for Makefile.PL
-
-	'MAN3PODS'     => {
-		'lib/Cooker.pm' => '$(INST_MAN3DIR)/Distribution::Cooker.3',
-		},
 
 	clean  => { FILES    => q|Distribution-Cooker-*| },
 
