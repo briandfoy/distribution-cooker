@@ -12,7 +12,7 @@ WriteMakefile(
 	'AUTHOR'       => 'brian d foy <bdfoy@cpan.org>',
 	
 	'PREREQ_PM'    => { 
-		'Test::More'       => '0',
+		'Test::More'       => '0.94',
 		'Config::IniFiles' => '0',
 		'Template'         => '0',
 		},
