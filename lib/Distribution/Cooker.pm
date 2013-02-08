@@ -152,7 +152,7 @@ F<CVS> directories.
 =cut
 
 sub cook {
-	my( $module, $dist, $file ) =
+	my( $module, $dist, $path ) =
 		map { $_[0]->$_() } qw( module dist module_path );
 
 	mkdir $dist, 0755 or croak "mkdir $dist: $!";
@@ -165,18 +165,15 @@ sub cook {
 		"-s", $_[0]->distribution_template_dir  ,
 		"-d", cwd(),                            ,
 		"-define", qq|module='$module'|         ,
-		"-define", qq|module_file='$file'|      ,
 		"-define", qq|module_dist='$dist'|      ,
 		"-define", qq|year='$year'|             ,
 		"-define", qq|module_path='$path'|      ,
-		q{--ignore=(\\.git|\\.svn)\\b}          ,
+		q{--ignore=\\b(\\.git|\\.svn|CVS)\\b}   ,
 		;
-
-	( my $base = $module ) =~ s/.*:://;
 
 	rename
 		catfile( 'lib', $_[0]->module_template_basename ),
-		catfile( 'lib', $file ) or croak "Could not rename module template: $!";
+		catfile( 'lib', $path ) or croak "Could not rename module template: $!";
 	}
 
 =item ttree_command
