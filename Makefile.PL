@@ -1,4 +1,4 @@
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker 6.46;
 
 require 5.008;
 
@@ -31,13 +31,10 @@ WriteMakefile(
 
 	clean  => { FILES    => q|Distribution-Cooker-*| },
 
-	(eval { ExtUtils::MakeMaker->VERSION(6.46) }
-		? (META_MERGE => {
-			resources => {
-				Repository => 'http://github.com/briandfoy/distribution--cooker/'
-				}
-			})
-		: ()
-	),
+	META_MERGE => {
+		resources => {
+			Repository => 'http://github.com/briandfoy/distribution-cooker/'
+			}
+		},
 
 	);
