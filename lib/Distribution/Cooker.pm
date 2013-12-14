@@ -7,7 +7,10 @@ no warnings;
 use subs qw();
 use vars qw($VERSION);
 
-$VERSION = '1.01';
+use File::Basename qw(dirname);
+use File::Path qw(make_path);
+
+$VERSION = '1.02';
 
 =head1 NAME
 
@@ -171,9 +174,18 @@ sub cook {
 		q{--ignore=\\b(\\.git|\\.svn|CVS)\\b}   ,
 		;
 
-	rename
-		catfile( 'lib', $_[0]->module_template_basename ),
-		catfile( 'lib', $path ) or croak "Could not rename module template: $!";
+
+	my $dir = catfile( 'lib', dirname( $path ) );
+	print "dir is [$dir]\n";
+	make_path( $dir );
+	croak( "Directory [$dir] does not exist" ) unless -d $dir;
+
+	my $old = catfile( 'lib', $_[0]->module_template_basename );
+	my $new = catfile( 'lib', $path );
+
+
+	rename $old => $new
+		or croak "Could not rename [$old] to [$new]: $!";
 	}
 
 =item ttree_command
