@@ -49,12 +49,12 @@ sub run {
 	$self->pre_run;
 
 	$self->module(
-		$module || prompt( "Module name> " )
+		$module || prompt( "Module name" )
 		);
 	croak( "No module specified!" ) unless $self->module;
 
 	$self->description(
-		$description || prompt( "Description> " )
+		$description || prompt( "Description" )
 		);
 
 	$self->dist(
