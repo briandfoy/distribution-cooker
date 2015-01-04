@@ -1,4 +1,4 @@
-# Changes to Distribution::Cooker
+Revision history for Perl module Distribution::Cooker
 
 1.01 - Thu Feb  7 21:49:15 2013
 	* Rename the module file to the conventional location under
