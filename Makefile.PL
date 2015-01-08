@@ -1,10 +1,12 @@
 require 5.008;
+
+package Distribution::Cooker;
 use strict;
 use warnings;
 
 use File::Spec::Functions qw(catfile);
 
-my $module    = 'Distribution::Cooker';
+my $module    = __PACKAGE__;
 my $github    = 'https://github.com/briandfoy/distribution-cooker';
 my $main_file = catfile( 'lib', split /::/, "$module.pm" );
 
@@ -18,7 +20,8 @@ my %WriteMakefile = (
 	'EXE_FILES' => [ 'script/dist_cooker' ],
 
 	'CONFIGURE_REQUIRES' => {
-		'ExtUtils::MakeMaker' => '6.64',
+		'ExtUtils::MakeMaker'   => '6.64',
+		'File::Spec::Functions' => '0',
 		},
 
 	'BUILD_REQUIRES' => {
