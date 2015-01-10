@@ -53,7 +53,7 @@ my %WriteMakefile = (
 	
 	'DIR' => [], # do not look in templates for Makefile.PL
 
-	clean  => { FILES    => q|Distribution-Cooker-*| },
+	clean => { FILES => "$dist-*" },
 	);
 
 sub arguments { \%WriteMakefile }
