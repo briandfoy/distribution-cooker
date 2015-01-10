@@ -1,10 +1,12 @@
 require 5.008;
+
+package Distribution::Cooker;
 use strict;
 use warnings;
 
 use File::Spec::Functions qw(catfile);
 
-my $module    = 'Distribution::Cooker';
+my $module    = __PACKAGE__;
 ( my $dist = $module ) =~ s/::/-/g;
 
 my $github    = 'https://github.com/briandfoy/distribution-cooker';
