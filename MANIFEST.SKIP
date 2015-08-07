@@ -70,3 +70,4 @@
 \.lwpcookies
 \.travis\.yml
 
+Distribution-.*

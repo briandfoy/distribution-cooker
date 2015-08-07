@@ -1,5 +1,4 @@
 Changes
-Distribution-Cooker-1.01.tar.gz
 examples/module_cooker
 INSTALL.SKIP
 lib/Distribution/Cooker.pm
