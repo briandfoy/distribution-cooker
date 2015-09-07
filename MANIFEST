@@ -4,7 +4,7 @@ INSTALL.SKIP
 lib/Distribution/Cooker.pm
 LICENSE
 Makefile.PL
-MANIFEST			This list of files
+MANIFEST
 MANIFEST.SKIP
 README.pod
 script/dist_cooker
