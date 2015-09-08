@@ -6,6 +6,8 @@ Distribution::Cooker->run( @ARGV );
 
 __END__
 
+=encoding utf8
+
 =head1 NAME
 
 dist_cooker - create a Perl distribution skeleton from personal templates
