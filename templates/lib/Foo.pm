@@ -9,6 +9,8 @@ use vars qw($VERSION);
 
 $VERSION = '0.11';
 
+=encoding utf8
+
 =head1 NAME
 
 [% module %] - [% description %]
@@ -28,15 +30,15 @@ $VERSION = '0.11';
 =cut
 
 sub new {
-	
+
 	}
-	
+
 =item init
 
 =cut
 
 sub init {
-	
+
 	}
 
 

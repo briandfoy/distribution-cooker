@@ -12,6 +12,8 @@ use File::Path qw(make_path);
 
 $VERSION = '1.02';
 
+=encoding utf8
+
 =head1 NAME
 
 Distribution::Cooker - Create a module directory from your own templates
