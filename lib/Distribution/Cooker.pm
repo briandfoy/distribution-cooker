@@ -1,8 +1,5 @@
 package Distribution::Cooker;
-use strict;
-
-use warnings;
-no warnings;
+use v5.14;
 
 use subs qw();
 use vars qw($VERSION);
@@ -10,7 +7,7 @@ use vars qw($VERSION);
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
 
-$VERSION = '1.02';
+$VERSION = '1.021';
 
 =encoding utf8
 
@@ -21,6 +18,10 @@ Distribution::Cooker - Create a module directory from your own templates
 =head1 SYNOPSIS
 
 	use Distribution::Cooker;
+
+	Distribution::Cooker->run( ... );
+
+	# most of this should go through the dist_cooker sketch
 
 =head1 DESCRIPTION
 
@@ -147,6 +148,8 @@ these template variables:
 
 =item module_path => module path under lib/ (Foo/Bar.pm)
 
+=item repo_name   => lowercase module with hyphens (foo-bar)
+
 =item year        => the current year
 
 =back
@@ -165,6 +168,7 @@ sub cook {
 
 	my $cwd = cwd();
 	my $year = ( localtime )[5] + 1900;
+	my $repo_name = $module =~ s/::/-/gr;
 
 	system $_[0]->ttree_command                 ,
 		"-s", $_[0]->distribution_template_dir  ,
@@ -173,6 +177,7 @@ sub cook {
 		"-define", qq|module_dist='$dist'|      ,
 		"-define", qq|year='$year'|             ,
 		"-define", qq|module_path='$path'|      ,
+		"-define", qq|repo_name='$repo_name'|   ,
 		q{--ignore=\\b(\\.git|\\.svn|CVS)\\b}   ,
 		;
 
