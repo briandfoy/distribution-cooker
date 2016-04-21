@@ -168,7 +168,7 @@ sub cook {
 
 	my $cwd = cwd();
 	my $year = ( localtime )[5] + 1900;
-	my $repo_name = $module =~ s/::/-/gr;
+	my $repo_name = lc( $module =~ s/::/-/gr );
 
 	system $_[0]->ttree_command                 ,
 		"-s", $_[0]->distribution_template_dir  ,
