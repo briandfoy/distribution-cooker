@@ -57,8 +57,9 @@ sub run {
 	$self->module(
 		$module || prompt( "Module name" )
 		);
-	croak( "No module specified!" ) unless $self->module;
-
+	croak( "No module specified!\n" ) unless $self->module;
+	croak( "Illegal module name [$module]\n" )
+		unless $self->module =~ m/ \A [A-Za-z0-9_]+ ( :: [A-Za-z0-9_]+ )* \z /x;
 	$self->description(
 		$description || prompt( "Description" )
 		);
@@ -81,7 +82,24 @@ something more powerful you can create a subclass.
 
 =cut
 
-sub new { bless {}, $_[0] }
+# There's got to be a better way to deal with the config
+sub new {
+	my $file = catfile( $ENV{HOME}, '.dist_cookerrc' );
+	my $config;
+	my( $name, $email ) = ( 'Frank Serpico', 'serpico@example.com' );
+
+	if( -e $file ) {
+		require Config::IniFiles;
+		$config = Config::IniFiles->new( -file => $file );
+		$name  = $config->val( 'user', 'name' );
+		$email = $config->val( 'user', 'email' );
+		}
+
+	bless {
+		name  => $name,
+		email => $email,
+		}, $_[0]
+	}
 
 =item init
 
@@ -160,8 +178,10 @@ F<CVS> directories.
 =cut
 
 sub cook {
+	my $self = shift;
+
 	my( $module, $dist, $path ) =
-		map { $_[0]->$_() } qw( module dist module_path );
+		map { $self->$_() } qw( module dist module_path );
 
 	mkdir $dist, 0755 or croak "mkdir $dist: $!";
 	chdir $dist       or croak "chdir $dist: $!";
@@ -170,24 +190,35 @@ sub cook {
 	my $year = ( localtime )[5] + 1900;
 	my $repo_name = lc( $module =~ s/::/-/gr );
 
-	system $_[0]->ttree_command                 ,
-		"-s", $_[0]->distribution_template_dir  ,
+	my $email = $self->{email};
+	my $name  = $self->{name};
+	my $description = $self->description;
+
+	# this is a terrible way to do this. I'll get right on that.
+	my @command = ( $self->ttree_command                 ,
+		"-s", $self->distribution_template_dir  ,
 		"-d", cwd(),                            ,
 		"-define", qq|module='$module'|         ,
 		"-define", qq|module_dist='$dist'|      ,
 		"-define", qq|year='$year'|             ,
 		"-define", qq|module_path='$path'|      ,
 		"-define", qq|repo_name='$repo_name'|   ,
-		q{--ignore=\\b(\\.git|\\.svn|CVS)\\b}   ,
-		;
+		"-define", qq|description='$description'|   ,
+		"-define", qq|email='$email'|   ,
+		"-define", qq|name='$name'|   ,
+		q{--ignore='^.*'}   ,
+		);
 
+say STDERR "Command is @command";
+
+	system { $command[0] } @command;
 
 	my $dir = catfile( 'lib', dirname( $path ) );
 	print "dir is [$dir]\n";
 	make_path( $dir );
 	croak( "Directory [$dir] does not exist" ) unless -d $dir;
 
-	my $old = catfile( 'lib', $_[0]->module_template_basename );
+	my $old = catfile( 'lib', $self->module_template_basename );
 	my $new = catfile( 'lib', $path );
 
 
