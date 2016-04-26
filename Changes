@@ -1,5 +1,8 @@
 Revision history for Perl module Distribution::Cooker
 
+1.021_01 2016-04-26T01:32:54Z
+	* Actually use the config file, and set repo_name for the templates.
+
 1.01 - 2013-02-07
 	* Rename the module file to the conventional location under
 	lib/
