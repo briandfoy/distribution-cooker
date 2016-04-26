@@ -7,7 +7,7 @@ use vars qw($VERSION);
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
 
-$VERSION = '1.021';
+$VERSION = '1.021_01';
 
 =encoding utf8
 
@@ -209,8 +209,6 @@ sub cook {
 		q{--ignore='^.*'}   ,
 		);
 
-say STDERR "Command is @command";
-
 	system { $command[0] } @command;
 
 	my $dir = catfile( 'lib', dirname( $path ) );
@@ -220,7 +218,6 @@ say STDERR "Command is @command";
 
 	my $old = catfile( 'lib', $self->module_template_basename );
 	my $new = catfile( 'lib', $path );
-
 
 	rename $old => $new
 		or croak "Could not rename [$old] to [$new]: $!";
