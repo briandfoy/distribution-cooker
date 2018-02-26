@@ -67,8 +67,15 @@ my %WriteMakefile = (
 		},
 
 	'PREREQ_PM'     => {
-		'Config::IniFiles' => '0',
-		'Template'         => '0',
+		'Config::IniFiles'      => '0',
+		'Template'              => '0',
+		'Carp'                  => '0',
+		'Cwd'                   => '0',
+		'File::Spec::Functions' => '0',
+		'strict'                => '0',
+		'subs'                  => '0',
+		'vars'                  => '0',
+		'warnings'              => '0',
 		},
 
 	'META_MERGE' => {
