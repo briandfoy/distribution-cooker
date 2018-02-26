@@ -5,7 +5,6 @@ lib/Distribution/Cooker.pm
 LICENSE
 Makefile.PL
 MANIFEST
-MANIFEST.SKIP
 README.pod
 script/dist_cooker
 t/dist.t
