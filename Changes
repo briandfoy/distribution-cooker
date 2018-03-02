@@ -1,9 +1,5 @@
 Revision history for Perl module Distribution::Cooker
 
-1.021_03 2018-02-26T11:29:19Z
-	* Update prereqs for all explicit modules even if they are core.
-	* RT #124541  https://rt.cpan.org/Ticket/Display.html?id=124541
-
 1.021_01 2016-04-26T01:32:54Z
 	* Actually use the config file, and set repo_name for the templates.
 
