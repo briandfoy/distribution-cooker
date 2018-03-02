@@ -1,5 +1,8 @@
 Revision history for Perl module Distribution::Cooker
 
+1.022 2018-03-02T12:02:47Z
+	* Make this a stable release
+
 1.021_01 2016-04-26T01:32:54Z
 	* Actually use the config file, and set repo_name for the templates.
 
