@@ -7,7 +7,7 @@ use vars qw($VERSION);
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
 
-$VERSION = '1.022';
+$VERSION = '1.023';
 
 =encoding utf8
 
