@@ -63,12 +63,12 @@ my %WriteMakefile = (
 		},
 
 	'TEST_REQUIRES' => {
-		'Test::More' => '0.98',
+		'Test::More' => '1',
 		},
 
 	'PREREQ_PM'     => {
 		'Config::IniFiles'      => '0',
-		'Template'              => '0',
+		'Mojo::Template'        => '0',
 		'Carp'                  => '0',
 		'Cwd'                   => '0',
 		'File::Spec::Functions' => '0',
