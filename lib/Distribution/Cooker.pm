@@ -7,7 +7,7 @@ use vars qw($VERSION);
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
 
-$VERSION = '1.023';
+$VERSION = '2.001';
 
 =encoding utf8
 
@@ -32,7 +32,9 @@ Distribution::Cooker - Create a module directory from your own templates
 use Carp qw(croak carp);
 use Cwd;
 use Config::IniFiles;
+use File::Find;
 use File::Spec::Functions qw(catfile);
+use Mojo::Template;
 
 __PACKAGE__->run( $ARGV[0] ) unless caller;
 
@@ -47,7 +49,7 @@ specify a description, it prompts you.
 =cut
 
 sub run {
-	my( $class, $module, $description ) = @_;
+	my( $class, $module, $description, $repo_name ) = @_;
 
 	my $self = $class->new;
 	$self->init;
@@ -62,6 +64,10 @@ sub run {
 		unless $self->module =~ m/ \A [A-Za-z0-9_]+ ( :: [A-Za-z0-9_]+ )* \z /x;
 	$self->description(
 		$description || prompt( "Description" )
+		);
+
+	$self->repo_name(
+		$repo_name || prompt( "Repo name" )
 		);
 
 	$self->dist(
@@ -143,8 +149,6 @@ customizable yet.
 
 =over 4
 
-=item ttree (from Template) is in C</usr/local/bin/ttree>
-
 =item Your distribution template directory is F<~/.templates/dist_cooker>
 
 =item Your module template name is F<lib/Foo.pm>
@@ -187,34 +191,13 @@ sub cook {
 	chdir $dist       or croak "chdir $dist: $!";
 
 	my $cwd = cwd();
-	my $year = ( localtime )[5] + 1900;
-	my $repo_name = lc( $module =~ s/::/-/gr );
 
-	my $email = $self->{email};
-	my $name  = $self->{name};
-	my $description = $self->description;
-
-	# this is a terrible way to do this. I'll get right on that.
-	my @command = ( $self->ttree_command                 ,
-		"-s", $self->distribution_template_dir  ,
-		"-d", cwd(),                            ,
-		"-define", qq|module='$module'|         ,
-		"-define", qq|module_dist='$dist'|      ,
-		"-define", qq|year='$year'|             ,
-		"-define", qq|module_path='$path'|      ,
-		"-define", qq|repo_name='$repo_name'|   ,
-		"-define", qq|description='$description'|   ,
-		"-define", qq|email='$email'|   ,
-		"-define", qq|name='$name'|   ,
-		q{--ignore='^.*'}   ,
-		);
-
-	system { $command[0] } @command;
-
-	my $dir = catfile( 'lib', dirname( $path ) );
 	print "dir is [$dir]\n";
 	make_path( $dir );
 	croak( "Directory [$dir] does not exist" ) unless -d $dir;
+
+	my $wanted = $self->_create_wanted;
+	find( $wanted, $self->distribution_template_dir );
 
 	my $old = catfile( 'lib', $self->module_template_basename );
 	my $new = catfile( 'lib', $path );
@@ -223,23 +206,51 @@ sub cook {
 		or croak "Could not rename [$old] to [$new]: $!";
 	}
 
-=item ttree_command
+sub _create_wanted {
+	my( $self, $base_dir, $dest_dir ) = @_;
+	my $renderer = Mojo::Template->new;
+	my %Ignore = map { $_, 1 } qw(
+		.git
+		);
 
-Returns the name for the ttree command from template, and croaks if
-that path does not exist or is not executable.
+	sub {
+		return if $_ eq '.';
+		if( exists $Ignore{$_} ) {
+			$File::Find::prune = 1;
+			return;
+			}
+		my $dest = $self->src_to_dest( $File::Find::name, $base_dir, $dest_dir );
+		}
+	}
 
-The default path is F</usr/local/bin/ttree>. Change this with the TTREE
-environment variable or you can override this in a subclass.
+sub template_vars {
+	my( $self ) = @_;
+	state $hash = {
+		cwd         => cwd(),
+		description => $self->description,
+		dir         => catfile( 'lib', dirname( $self->module_path ) )
+		dist        => $self->dist,
+		email       => $self->{email},
+		module_path => $self->module_path,
+		name        => $self->{name},
+		path        => $self->module_path,
+		repo_name   => $self->repo_name
+		year        => ( localtime )[5] + 1900,
+		};
 
-=cut
+	$hash;
+	}
 
-sub ttree_command {
-	my $path = $ENV{'TTREE'} // "/usr/local/bin/ttree";
+sub _src_to_dest {
+	state $mt = Mojo::Template->var(1);
 
-	croak "Didn't find ttree at $path!\n" unless -e $path;
-	croak "$path is not executable!\n"    unless -x $path;
+	my( $self, $source, $base, $dest ) = @_;
+		say "File source: $source";
 
-	$path;
+	my $rendered = $mt->render_file( $base, $self->template_vars )
+
+		say "File dest: $dest";
+
 	}
 
 =item distribution_template_dir
@@ -254,6 +265,7 @@ a subclass.
 
 sub distribution_template_dir {
 	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
+	$path = readlink($path) if -l $path;
 
 	croak "Couldn't find templates at $path!\n" unless -d $path;
 
@@ -272,6 +284,19 @@ this in a subclass.
 sub description {
 	$_[0]->{description} = $_[1] if defined $_[1];
 	$_[0]->{description} || 'TODO: describe this module'
+	}
+
+=item repo_name
+
+Returns the repo_name for the project. This defaults to the module
+name all lowercased with C<::> replaced with C<->. You can override
+this in a subclass.
+
+=cut
+
+sub repo_name {
+	$_[0]->{repo_name} = $_[1] if defined $_[1];
+	$_[0]->{repo_name} // $self->module =~ s/::/-/gr
 	}
 
 =item module_template_basename
