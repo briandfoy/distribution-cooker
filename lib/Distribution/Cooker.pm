@@ -190,8 +190,10 @@ sub cook {
 	mkdir $dist, 0755 or croak "mkdir $dist: $!";
 	chdir $dist       or croak "chdir $dist: $!";
 
+
 	my $cwd = cwd();
 
+	my $dir = catfile( 'lib', dirname( $path ) );
 	print "dir is [$dir]\n";
 	make_path( $dir );
 	croak( "Directory [$dir] does not exist" ) unless -d $dir;
