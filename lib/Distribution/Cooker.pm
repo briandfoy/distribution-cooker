@@ -223,18 +223,22 @@ sub _create_wanted {
 		}
 	}
 
+=item template_vars
+
+=cut
+
 sub template_vars {
 	my( $self ) = @_;
 	state $hash = {
 		cwd         => cwd(),
 		description => $self->description,
-		dir         => catfile( 'lib', dirname( $self->module_path ) )
+		dir         => catfile( 'lib', dirname( $self->module_path ) ),
 		dist        => $self->dist,
 		email       => $self->{email},
 		module_path => $self->module_path,
 		name        => $self->{name},
 		path        => $self->module_path,
-		repo_name   => $self->repo_name
+		repo_name   => $self->repo_name,
 		year        => ( localtime )[5] + 1900,
 		};
 
@@ -247,7 +251,7 @@ sub _src_to_dest {
 	my( $self, $source, $base, $dest ) = @_;
 		say "File source: $source";
 
-	my $rendered = $mt->render_file( $base, $self->template_vars )
+	my $rendered = $mt->render_file( $base, $self->template_vars );
 
 		say "File dest: $dest";
 
@@ -296,7 +300,7 @@ this in a subclass.
 
 sub repo_name {
 	$_[0]->{repo_name} = $_[1] if defined $_[1];
-	$_[0]->{repo_name} // $self->module =~ s/::/-/gr
+	$_[0]->{repo_name} // $_[0]->module =~ s/::/-/gr
 	}
 
 =item module_template_basename
