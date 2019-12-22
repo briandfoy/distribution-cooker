@@ -27,7 +27,7 @@ is( $class->cook, 'Buster', "cook has been mocked" );
 
 # try it with a module name
 subtest module_name => sub {
-	ok( my $cooker = $class->run( $module, 'description' ),
+	ok( my $cooker = $class->run( $module, 'description', $module ),
 		"run returns something that is true" );
 	isa_ok( $cooker, $class );
 
