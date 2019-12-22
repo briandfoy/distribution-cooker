@@ -6,11 +6,11 @@ use Mojo::Util qw(dumper);
 use Perl::Version;
 use Test::More 1;
 
-diag( <<~"HERE" );
+diag( <<"HERE" );
 	Module:   @{[ module_minimum()   ]}
 	Makefile: @{[ makefile_minimum() ]}
 	Travis:   @{[ travis_minimum()   ]}
-	HERE
+HERE
 
 ok( makefile_minimum() == module_minimum(), "Makefile version matches module version" )
 	or diag( "Makefile: @{[makefile_minimum()]} Module: @{[module_minimum()]}" );
