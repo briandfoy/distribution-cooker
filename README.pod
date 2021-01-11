@@ -2,6 +2,14 @@
 
 =encoding utf8
 
+=for HTML <a href='https://ci.appveyor.com/project/briandfoy/distribution-cooker'><img src='https://ci.appveyor.com/api/projects/status/a?svg=true' /></a>
+
+=for HTML <a href='https://coveralls.io/github/briandfoy/distribution-cooker?branch=master'><img src='https://coveralls.io/repos/github/briandfoy/distribution-cooker/badge.svg?branch=master' alt='Coverage Status' /></a>
+
+=for HTML <a href="https://github.com/briandfoy/distribution-cooker/blob/master/LICENSE"><img src="https://img.shields.io/cpan/l/Distribution-Cooker.svg" /></a>
+
+=for HTML <a href="https://metacpan.org/pod/Distribution::Cooker"><img src="https://img.shields.io/cpan/v/Distribution-Cooker.svg" /></A>
+
 =head1 The Distribution::Cooker module
 
 This is the I<README> for the L<Distribution::Cooker> Perl module. This
