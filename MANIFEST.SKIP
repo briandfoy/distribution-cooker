@@ -73,3 +73,6 @@
 
 Distribution-.*
 \AMANIFEST.+
+\bMANIFEST\s\d
+\bChanges\s\d
+
