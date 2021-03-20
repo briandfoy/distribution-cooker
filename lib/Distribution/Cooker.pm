@@ -1,11 +1,12 @@
+use utf8;
+
 package Distribution::Cooker;
-use v5.14;
+use v5.20;
+use experimental qw(signatures);
 
 use subs qw();
 use vars qw($VERSION);
 
-use File::Basename qw(dirname);
-use File::Path qw(make_path);
 
 $VERSION = '2.001';
 
@@ -29,14 +30,18 @@ Distribution::Cooker - Create a module directory from your own templates
 
 =cut
 
-use Carp qw(croak carp);
+use Carp                  qw(croak carp);
 use Cwd;
 use Config::IniFiles;
 use File::Find;
-use File::Spec::Functions qw(catfile);
+use File::Basename        qw(dirname);
+use File::Path            qw(make_path);
+use File::Spec::Functions qw(catfile abs2rel);
+use Mojo::File;
 use Mojo::Template;
+use Mojo::Util            qw(decode encode);
 
-__PACKAGE__->run( $ARGV[0] ) unless caller;
+__PACKAGE__->run( @ARGV ) unless caller;
 
 =item run( [ MODULE_NAME, [ DESCRIPTION ] ] )
 
@@ -56,23 +61,15 @@ sub run {
 
 	$self->pre_run;
 
-	$self->module(
-		$module || prompt( "Module name" )
-		);
+	$self->module( $module || prompt( "Module name" ) );
 	croak( "No module specified!\n" ) unless $self->module;
 	croak( "Illegal module name [$module]\n" )
 		unless $self->module =~ m/ \A [A-Za-z0-9_]+ ( :: [A-Za-z0-9_]+ )* \z /x;
-	$self->description(
-		$description || prompt( "Description" )
-		);
+	$self->description( $description || prompt( "Description" ) );
 
-	$self->repo_name(
-		$repo_name || prompt( "Repo name" )
-		);
+	$self->repo_name( $repo_name || prompt( "Repo name" ) );
 
-	$self->dist(
-		$self->module_to_distname( $self->module )
-		);
+	$self->dist( $self->module_to_distname( $self->module ) );
 
 	$self->cook;
 
@@ -184,45 +181,54 @@ F<CVS> directories.
 sub cook {
 	my $self = shift;
 
-	my( $module, $dist, $path ) =
-		map { $self->$_() } qw( module dist module_path );
+	my $dir = lc $self->dist;
 
-	mkdir $dist, 0755 or croak "mkdir $dist: $!";
-	chdir $dist       or croak "chdir $dist: $!";
-
+	make_path( $dir ) or croak "mkdir $dir: $!";
+	chdir $dir        or croak "chdir $dir: $!";
 
 	my $cwd = cwd();
 
-	my $dir = catfile( 'lib', dirname( $path ) );
-	print "dir is [$dir]\n";
-	make_path( $dir );
-	croak( "Directory [$dir] does not exist" ) unless -d $dir;
-
-	my $wanted = $self->_create_wanted;
-	find( $wanted, $self->distribution_template_dir );
+	my $files = $self->get_template_files;
 
 	my $old = catfile( 'lib', $self->module_template_basename );
-	my $new = catfile( 'lib', $path );
+	my $new = catfile( 'lib', $self->module_path );
 
+	my $vars = $self->template_vars;
+
+	my $mt = Mojo::Template->new->line_start('ϕ')->tag_start('«')->tag_end('»');
+	foreach my $file ( $files->@* ) {
+		my $new_file = abs2rel( $file, $self->distribution_template_dir );
+
+		if( -d $file ) {
+			make_path( $new_file );
+			next;
+			}
+
+		my $contents = decode( 'UTF-8', Mojo::File->new( $file )->slurp );
+		my $rendered = $mt->vars(1)->render( $contents, $vars );
+		Mojo::File->new( $new_file )->spurt( encode( 'UTF-8', $rendered ) );
+		}
+
+	make_path dirname($new);
 	rename $old => $new
 		or croak "Could not rename [$old] to [$new]: $!";
 	}
 
-sub _create_wanted {
-	my( $self, $base_dir, $dest_dir ) = @_;
-	my $renderer = Mojo::Template->new;
-	my %Ignore = map { $_, 1 } qw(
-		.git
-		);
+sub get_template_files ( $self ) {
+	my $template_dir = $self->distribution_template_dir;
 
-	sub {
-		return if $_ eq '.';
-		if( exists $Ignore{$_} ) {
+	my @files;
+	my $wanted = sub {
+		if( /\A(\.git|\.svn|CVS|\.infra)\b/ ) {
 			$File::Find::prune = 1;
 			return;
 			}
-		my $dest = $self->src_to_dest( $File::Find::name, $base_dir, $dest_dir );
-		}
+		push @files, $File::Find::name;
+		};
+
+	find( $wanted, $self->distribution_template_dir );
+
+	return \@files;
 	}
 
 =item template_vars
@@ -242,6 +248,7 @@ sub template_vars {
 		path        => $self->module_path,
 		repo_name   => $self->repo_name,
 		year        => ( localtime )[5] + 1900,
+		module      => $self->module,
 		};
 
 	$hash;
