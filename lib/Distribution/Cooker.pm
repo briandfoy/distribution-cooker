@@ -338,10 +338,24 @@ This looks for values in this order, and in any combination:
 
 =cut
 
+sub _git_user_name {
+	my $name = `git config user.name`;
+	$name =~ s/\R//g;
+	trim( $name ) if length $name;
+	$name;
+	}
+
+sub _git_user_email {
+	my $email = `git config user.name`;
+	$email =~ s/\R//g;
+	trim( $email ) if defined $email;
+	$email;
+	}
+
 sub default_config ( $class ) {
 	my( $author, $email ) = (
-		$ENV{DIST_COOKER_AUTHOR} // trim(`git config user.name`)  // $class->default_author_name,
-		$ENV{DIST_COOKER_EMAIL}  // trim(`git config user.email`) // $class->default_author_email,
+		$ENV{DIST_COOKER_AUTHOR} // _git_user_name()  // $class->default_author_name,
+		$ENV{DIST_COOKER_EMAIL}  // _git_user_email() // $class->default_author_email,
 		);
 
 	{
