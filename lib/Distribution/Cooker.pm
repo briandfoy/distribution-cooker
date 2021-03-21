@@ -41,7 +41,7 @@ Distribution::Cooker - Create a Perl module directory from your own templates
 
 =over 4
 
-=item cook
+=item * cook
 
 Take the templates and cook them. This version uses L<Mojo::Template>
 Toolkit, but you can make a subclass to override it. See the notes
@@ -52,9 +52,9 @@ customizable yet.
 
 =over 4
 
-=item Your distribution template directory is F<~/.templates/dist_cooker>
+=item * Your distribution template directory is F<~/.templates/dist_cooker>
 
-=item Your module template name is F<lib/Foo.pm>, which will be moved into place later
+=item * Your module template name is F<lib/Foo.pm>, which will be moved into place later
 
 =back
 
@@ -121,7 +121,7 @@ sub cook ( $self ) {
 		or croak "Could not rename [$old] to [$new]: $!";
 	}
 
-=item init
+=item * init
 
 Initialize the object. There's nothing fancy here, but if you need
 something more powerful you can create a subclass and run some info here.
@@ -133,7 +133,7 @@ and before the C<pre_run> step. By default, this does nothing.
 
 sub init { 1 }
 
-=item new
+=item * new
 
 Creates the bare object with the name and email of the module author,
 looking for values in this order, with any combination for author and
@@ -153,7 +153,7 @@ Override C<config_file_name> to use a different name.
 
 sub new ( $class ) { bless $class->get_config, $class }
 
-=item pre_run
+=item * pre_run
 
 Runs right before C<cook> does its work.
 
@@ -165,7 +165,7 @@ after it initializes it. By default, this does nothing.
 
 sub pre_run  { 1 }
 
-=item post_run
+=item * post_run
 
 C<run()> calls this method right after it processes the template files.
 By default, this does nothing.
@@ -174,7 +174,7 @@ By default, this does nothing.
 
 sub post_run { 1 }
 
-=item report
+=item * report
 
 =cut
 
@@ -186,7 +186,7 @@ sub report ( $self ) {
 	print { $fh } dumper( $self->template_vars ), "\n";
 	}
 
-=item run( [ MODULE_NAME, [ DESCRIPTION ] ] )
+=item * run( [ MODULE_NAME, [ DESCRIPTION ] ] )
 
 The C<run> method kicks off everything, and gives you a chance to
 do things between steps/.
@@ -196,7 +196,8 @@ do things between steps/.
 	* run pre_run (by default, does nothing)
 	* collects information and prompts interactively for what it needs
 	* cooks the templates (~/.templates/modules by default)
-	* run pre_run (by default, does nothing)
+	* run post_run (by default, does nothing)
+	* create cooker_report.txt (it's in .gitignore)
 
 If you don't specify the module name, it prompts you. If you don't
 specify a description, it prompts you.
@@ -260,7 +261,7 @@ C<Frank Serpico> and C<serpico@example.com>.
 sub default_author_email ( $class ) { 'serpico@example.com' }
 sub default_author_name  ( $class ) { 'Frank Serpico' }
 
-=item description( [ DESCRIPTION ] )
+=item * description( [ DESCRIPTION ] )
 
 Returns the description of the module. With an argument, it sets
 the value.
@@ -275,7 +276,7 @@ sub description ( $class, @args ) {
 	$class->{description} || 'TODO: describe this module'
 	}
 
-=item distribution_template_dir
+=item * distribution_template_dir
 
 Returns the path for the distribution templates. The default is
 F<$ENV{HOME}/.templates/modules>. If that path is a symlink, this
@@ -326,7 +327,7 @@ sub default_config ( $class ) {
 
 	}
 
-=item dist( [ DIST_NAME ] )
+=item * dist( [ DIST_NAME ] )
 
 Return the dist name. With an argument, set the module name.
 
@@ -337,7 +338,7 @@ sub dist ( $self, @args ) {
 	$self->{dist};
 	}
 
-=item module( [ MODULE_NAME ] )
+=item * module( [ MODULE_NAME ] )
 
 Return the module name. With an argument, set the module name.
 
@@ -348,7 +349,7 @@ sub module ( $self, @args ) {
 	$self->{module};
 	}
 
-=item module_path()
+=item * module_path()
 
 Return the module path under F<lib/>. You must have set C<module>
 already.
@@ -362,7 +363,7 @@ sub module_path ( $self ) {
 	my $path = catfile( @parts );
 	}
 
-=item module_to_distname( MODULE_NAME )
+=item * module_to_distname( MODULE_NAME )
 
 Take a module name, such as C<Foo::Bar>, and turn it into a
 distribution name, such as C<Foo-Bar>.
@@ -371,7 +372,7 @@ distribution name, such as C<Foo-Bar>.
 
 sub module_to_distname ( $self, $module ) { $module =~ s/::/-/gr }
 
-=item module_template_basename
+=item * module_template_basename
 
 Returns the name of the template file that is the module. The default
 name is F<Foo.pm>. This file is moved to the right place under F<lib/>
@@ -381,7 +382,7 @@ in the cooked templates.
 
 sub module_template_basename ( $class ) { 'Foo.pm' }
 
-=item repo_name
+=item * repo_name
 
 Returns the repo_name for the project. This defaults to the module
 name all lowercased with C<::> replaced with C<->. You can override
@@ -419,7 +420,7 @@ sub template_files ( $self ) {
 	return \@files;
 	}
 
-=item template_vars
+=item * template_vars
 
 Returns a hash reference of values to fill in the templates. This hash
 is passed to the L<Mojo::Template> renderer.
