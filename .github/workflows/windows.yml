@@ -1,0 +1,56 @@
+name: windows
+
+on:
+    push:
+        branches:
+            - '**'
+        tags-ignore:
+            # I tag release pushes but those should have already been tested
+            - 'release-*'
+        paths-ignore:
+            # list all the files which are irrelevant to the tests
+            # non-code, support files, docs, etc
+            - '.appveyor.yml'
+            - '.github/workflows/linux.yml'
+            - '.github/workflows/macos.yml'
+            - '.gitignore'
+            - '.releaserc'
+            - 'Changes'
+            - 'LICENSE'
+            - 'README.pod'
+        pull_request:
+
+jobs:
+    perl:
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os:
+                - windows-2019
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up Perl
+              run: |
+                choco install strawberryperl
+                echo "PATH=C:\strawberry\c\bin;C:\strawberry\perl\site\bin;C:\strawberry\perl\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            - name: Perl version
+              run: perl -V
+            - name: Install dependencies
+              run: |
+                cpan -T .
+            - name: Run tests
+              run: |
+                perl Makefile.PL
+                make test
+              env:
+                HARNESS_VERBOSE: 1
+            - name: Run tests in parallel
+              env:
+                HARNESS_OPTIONS: j10
+              run: |
+                perl Makefile.PL
+                make test
+            - name: Run distribution tests
+              run: |
+                perl Makefile.PL
+                make disttest
