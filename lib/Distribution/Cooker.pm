@@ -1,7 +1,7 @@
 use utf8;
 
 package Distribution::Cooker;
-use v5.20;
+use v5.26;
 use experimental qw(signatures);
 
 our $VERSION = '2.001';
