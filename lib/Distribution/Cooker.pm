@@ -4,17 +4,27 @@ package Distribution::Cooker;
 use v5.20;
 use experimental qw(signatures);
 
-use subs qw();
-use vars qw($VERSION);
+our $VERSION = '2.001';
 
+use Carp                  qw(croak carp);
+use Cwd;
+use Config::IniFiles;
+use File::Find;
+use File::Basename        qw(dirname);
+use File::Path            qw(make_path);
+use File::Spec::Functions qw(catfile abs2rel);
+use IO::Interactive       qw(is_interactive);
+use Mojo::File;
+use Mojo::Template;
+use Mojo::Util            qw(decode encode trim dumper);
 
-$VERSION = '2.001';
+__PACKAGE__->run( @ARGV ) unless caller;
 
 =encoding utf8
 
 =head1 NAME
 
-Distribution::Cooker - Create a module directory from your own templates
+Distribution::Cooker - Create a Perl module directory from your own templates
 
 =head1 SYNOPSIS
 
@@ -26,120 +36,16 @@ Distribution::Cooker - Create a module directory from your own templates
 
 =head1 DESCRIPTION
 
+
+=head2 Process methods
+
 =over 4
-
-=cut
-
-use Carp                  qw(croak carp);
-use Cwd;
-use Config::IniFiles;
-use File::Find;
-use File::Basename        qw(dirname);
-use File::Path            qw(make_path);
-use File::Spec::Functions qw(catfile abs2rel);
-use Mojo::File;
-use Mojo::Template;
-use Mojo::Util            qw(decode encode);
-
-__PACKAGE__->run( @ARGV ) unless caller;
-
-=item run( [ MODULE_NAME, [ DESCRIPTION ] ] )
-
-Calls pre-run, collects information about the module you want to
-create, cooks the templates, and calls post-run.
-
-If you don't specify the module name, it prompts you. If you don't
-specify a description, it prompts you.
-
-=cut
-
-sub run {
-	my( $class, $module, $description, $repo_name ) = @_;
-
-	my $self = $class->new;
-	$self->init;
-
-	$self->pre_run;
-
-	$self->module( $module || prompt( "Module name" ) );
-	croak( "No module specified!\n" ) unless $self->module;
-	croak( "Illegal module name [$module]\n" )
-		unless $self->module =~ m/ \A [A-Za-z0-9_]+ ( :: [A-Za-z0-9_]+ )* \z /x;
-	$self->description( $description || prompt( "Description" ) );
-
-	$self->repo_name( $repo_name || prompt( "Repo name" ) );
-
-	$self->dist( $self->module_to_distname( $self->module ) );
-
-	$self->cook;
-
-	$self->post_run;
-
-	$self;
-	}
-
-=item new
-
-Create the bare object. There's nothing fancy here, but if you need
-something more powerful you can create a subclass.
-
-=cut
-
-# There's got to be a better way to deal with the config
-sub new {
-	my $file = catfile( $ENV{HOME}, '.dist_cookerrc' );
-	my $config;
-	my( $name, $email ) = ( 'Frank Serpico', 'serpico@example.com' );
-
-	if( -e $file ) {
-		require Config::IniFiles;
-		$config = Config::IniFiles->new( -file => $file );
-		$name  = $config->val( 'user', 'name' );
-		$email = $config->val( 'user', 'email' );
-		}
-
-	bless {
-		name  => $name,
-		email => $email,
-		}, $_[0]
-	}
-
-=item init
-
-Initialize the object. There's nothing fancy here, but if you need
-something more powerful you can create a subclass.
-
-=cut
-
-sub init { 1 }
-
-=item pre_run
-
-Method to call before run() starts its work. run() will call this for
-you. By default this is a no-op, but you can redefine it or override
-it in a subclass.
-
-run() calls this method immediately after it creates the object but
-before it initializes it.
-
-=cut
-
-sub pre_run  { 1 }
-
-=item post_run
-
-Method to call after C<run()> ends its work. C<run()> calls this for
-you. By default this is a no-op, but you can redefine it or override
-it in a subclass.
-
-=cut
-
-sub post_run { 1 }
 
 =item cook
 
-Take the templates and cook them. This version uses Template
-Toolkit, but you can make a subclass to override it.
+Take the templates and cook them. This version uses L<Mojo::Template>
+Toolkit, but you can make a subclass to override it. See the notes
+about Mojo::Template.
 
 I assume my own favorite values, and haven't made these
 customizable yet.
@@ -148,39 +54,36 @@ customizable yet.
 
 =item Your distribution template directory is F<~/.templates/dist_cooker>
 
-=item Your module template name is F<lib/Foo.pm>
+=item Your module template name is F<lib/Foo.pm>, which will be moved into place later
 
 =back
+
+This uses L<Mojo::Template> to render the templates, and various
+settings. The values from C<template_vars> are passed to the templates
+and its keys are available as named variables.
+
+
+By default, these tag settings are used because these characters
+are unlikely to appear in Perl code:
+
+	* the line_start is ϕ (U+03D5)
+	* the tag start is »
+	* the line start is «
+
+For example:
+
+	This is module « $module »
 
 When C<cook> processes the templates, it provides definitions for
-these template variables:
-
-=over 4
-
-=item description => the module description
-
-=item module      => the package name (Foo::Bar)
-
-=item module_dist => the distribution name (Foo-Bar)
-
-=item module_file => module file name (Bar.pm)
-
-=item module_path => module path under lib/ (Foo/Bar.pm)
-
-=item repo_name   => lowercase module with hyphens (foo-bar)
-
-=item year        => the current year
-
-=back
+these template variables listed for C<template_vars>.
 
 While processing the templates, C<cook> ignores F<.git>, F<.svn>, and
 F<CVS> directories.
 
+
 =cut
 
-sub cook {
-	my $self = shift;
-
+sub cook ( $self ) {
 	my $dir = lc $self->dist;
 
 	make_path( $dir ) or croak "mkdir $dir: $!";
@@ -188,14 +91,18 @@ sub cook {
 
 	my $cwd = cwd();
 
-	my $files = $self->get_template_files;
+	my $files = $self->template_files;
 
 	my $old = catfile( 'lib', $self->module_template_basename );
 	my $new = catfile( 'lib', $self->module_path );
 
 	my $vars = $self->template_vars;
 
-	my $mt = Mojo::Template->new->line_start('ϕ')->tag_start('«')->tag_end('»');
+	my $mt = Mojo::Template->new
+		->line_start( $self->{line_start} )
+		->tag_start(  $self->{tag_start}  )
+		->tag_end(    $self->{tag_end}    )
+		->vars(1);
 	foreach my $file ( $files->@* ) {
 		my $new_file = abs2rel( $file, $self->distribution_template_dir );
 
@@ -214,7 +121,286 @@ sub cook {
 		or croak "Could not rename [$old] to [$new]: $!";
 	}
 
-sub get_template_files ( $self ) {
+=item init
+
+Initialize the object. There's nothing fancy here, but if you need
+something more powerful you can create a subclass and run some info here.
+
+This step happens right after object create and configuration handling
+and before the C<pre_run> step. By default, this does nothing.
+
+=cut
+
+sub init { 1 }
+
+=item new
+
+Creates the bare object with the name and email of the module author,
+looking for values in this order, with any combination for author and
+email:
+
+	* take values from the env: DIST_COOKER_AUTHOR and DIST_COOKER_EMAIL
+	* look at git config for C<user.name> and C<user.email>
+	* use default values from the method C<default_name> and C<default_email>
+
+This looks for F<~/.dist_cooker.ini> to read the INI config and add that
+information to the object.
+
+Override C<config_file_name> to use a different name.
+
+
+=cut
+
+sub new ( $class ) { bless $class->get_config, $class }
+
+=item pre_run
+
+Runs right before C<cook> does its work.
+
+run() calls this method immediately after it creates the object and
+after it initializes it. By default, this does nothing.
+
+
+=cut
+
+sub pre_run  { 1 }
+
+=item post_run
+
+C<run()> calls this method right after it processes the template files.
+By default, this does nothing.
+
+=cut
+
+sub post_run { 1 }
+
+=item report
+
+=cut
+
+sub report ( $self ) {
+	open my $fh, '>', 'cooker_report.txt' or return;
+
+	print { $fh } "$0 " . localtime() . "\n";
+
+	print { $fh } dumper( $self->template_vars ), "\n";
+	}
+
+=item run( [ MODULE_NAME, [ DESCRIPTION ] ] )
+
+The C<run> method kicks off everything, and gives you a chance to
+do things between steps/.
+
+	* create the object
+	* run init (by default, does nothing)
+	* run pre_run (by default, does nothing)
+	* collects information and prompts interactively for what it needs
+	* cooks the templates (~/.templates/modules by default)
+	* run pre_run (by default, does nothing)
+
+If you don't specify the module name, it prompts you. If you don't
+specify a description, it prompts you.
+
+=cut
+
+sub run ( $class, $module, $description, $repo_name ) {
+	my $self = $class->new;
+	$self->init;
+
+	$self->pre_run;
+
+	$self->module( $module || prompt( "Module name" ) );
+	croak( "No module specified!\n" ) unless $self->module;
+	croak( "Illegal module name [$module]\n" )
+		unless $self->module =~ m/ \A [A-Za-z0-9_]+ ( :: [A-Za-z0-9_]+ )* \z /x;
+	$self->description( $description || prompt( "Description" ) || "An undescribed module" );
+
+	$self->repo_name( $repo_name || prompt( "Repo name" ) );
+
+	$self->dist( $self->module_to_distname( $self->module ) );
+
+	$self->cook;
+
+	$self->post_run;
+
+	$self->report;
+
+	$self;
+	}
+
+
+=back
+
+=head2 Informative methods
+
+These provide information the processing needs to do its work.
+
+=over 4
+
+=item * config_file_name
+
+Return the filename (the basename) of the config file. The default is
+F<.dist_cooker.ini>.
+
+=cut
+
+sub config_file_name { '.dist_cooker.ini' }
+
+=item * default_author_email
+
+=item * default_author_name
+
+Returns the last resort values for author name or email. These are
+C<Frank Serpico> and C<serpico@example.com>.
+
+=cut
+
+sub default_author_email ( $class ) { 'serpico@example.com' }
+sub default_author_name  ( $class ) { 'Frank Serpico' }
+
+=item description( [ DESCRIPTION ] )
+
+Returns the description of the module. With an argument, it sets
+the value.
+
+The default name is C<TODO: describe this module>. You can override
+this in a subclass.
+
+=cut
+
+sub description ( $class, @args ) {
+	$class->{description} = $args[0] if defined $args[0];
+	$class->{description} || 'TODO: describe this module'
+	}
+
+=item distribution_template_dir
+
+Returns the path for the distribution templates. The default is
+F<$ENV{HOME}/.templates/modules>. If that path is a symlink, this
+returns that target of that link.
+
+=cut
+
+sub distribution_template_dir {
+	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
+	$path = readlink($path) if -l $path;
+
+	croak "Couldn't find templates at $path!\n" unless -d $path;
+
+	$path;
+	}
+
+=item * default_config
+
+Returns a hash reference of the config values.
+
+	* author_name
+	* email
+	* line_start
+	* tag_end
+	* tag_start
+
+This looks for values in this order, and in any combination:
+
+	* take values from the env: DIST_COOKER_AUTHOR and DIST_COOKER_EMAIL
+	* look at git config for C<user.name> and C<user.email>
+	* use default values from the method C<default_author_name> and C<default_author_email>
+
+=cut
+
+sub default_config ( $class ) {
+	my( $author, $email ) = (
+		$ENV{DIST_COOKER_AUTHOR} // trim(`git config user.name`)  // $class->default_author_name,
+		$ENV{DIST_COOKER_EMAIL}  // trim(`git config user.email`) // $class->default_author_email,
+		);
+
+	{
+		author_name => $author,
+		email       => $email,
+		line_start  => 'ϕ',
+		tag_end     => '»',
+		tag_start   => '«',
+	}
+
+	}
+
+=item dist( [ DIST_NAME ] )
+
+Return the dist name. With an argument, set the module name.
+
+=cut
+
+sub dist ( $self, @args ) {
+	$self->{dist} = $args[0] if defined $args[0];
+	$self->{dist};
+	}
+
+=item module( [ MODULE_NAME ] )
+
+Return the module name. With an argument, set the module name.
+
+=cut
+
+sub module ( $self, @args ) {
+	$self->{module} = $args[0] if defined $args[0];
+	$self->{module};
+	}
+
+=item module_path()
+
+Return the module path under F<lib/>. You must have set C<module>
+already.
+
+=cut
+
+sub module_path ( $self ) {
+	my @parts = split /::/, $self->{module};
+	return unless @parts;
+	$parts[-1] .= '.pm';
+	my $path = catfile( @parts );
+	}
+
+=item module_to_distname( MODULE_NAME )
+
+Take a module name, such as C<Foo::Bar>, and turn it into a
+distribution name, such as C<Foo-Bar>.
+
+=cut
+
+sub module_to_distname ( $self, $module ) { $module =~ s/::/-/gr }
+
+=item module_template_basename
+
+Returns the name of the template file that is the module. The default
+name is F<Foo.pm>. This file is moved to the right place under F<lib/>
+in the cooked templates.
+
+=cut
+
+sub module_template_basename ( $class ) { 'Foo.pm' }
+
+=item repo_name
+
+Returns the repo_name for the project. This defaults to the module
+name all lowercased with C<::> replaced with C<->. You can override
+this in a subclass.
+
+=cut
+
+sub repo_name ( $class, @args ) {
+	$class->{repo_name} = $args[0] if defined $args[0];
+	$class->{repo_name} // $class->module =~ s/::/-/gr
+	}
+
+=item * template_files
+
+Return the list of templates to process. These are all the files in
+the C<distribution_template_dir> excluding F<.git>, F<.svn>, F<CVS>,
+and C<.infra>.
+
+=cut
+
+sub template_files ( $self ) {
 	my $template_dir = $self->distribution_template_dir;
 
 	my @files;
@@ -233,161 +419,140 @@ sub get_template_files ( $self ) {
 
 =item template_vars
 
+Returns a hash reference of values to fill in the templates. This hash
+is passed to the L<Mojo::Template> renderer.
+
+=over 4
+
+=item author_name    => the name of the module author
+
+=item cooker_version => version of Distribution::Cooker
+
+=item cwd            => the current working directory of the new module
+
+=item description    => the module description
+
+=item dir            => path to module file
+
+=item dist           => dist name (Foo-Bar)
+
+=item email          => author email
+
+=item module         => the package name (Foo::Bar)
+
+=item module_path    => module path under lib/ (Foo/Bar.pm)
+
+=item repo_name      => lowercase module with hyphens (foo-bar)
+
+=item template_path  => the source of the template files
+
+=item year           => the current year
+
+=back
+
 =cut
 
-sub template_vars {
-	my( $self ) = @_;
+sub template_vars ( $self ) {
 	state $hash = {
-		cwd         => cwd(),
-		description => $self->description,
-		dir         => catfile( 'lib', dirname( $self->module_path ) ),
-		dist        => $self->dist,
-		email       => $self->{email},
-		module_path => $self->module_path,
-		name        => $self->{name},
-		path        => $self->module_path,
-		repo_name   => $self->repo_name,
-		year        => ( localtime )[5] + 1900,
-		module      => $self->module,
+		author_name    => $self->{author_name},
+		cooker_version => $VERSION,
+		cwd            => cwd(),
+		description    => $self->description,
+		dir            => catfile( 'lib', dirname( $self->module_path ) ),
+		dist           => $self->dist,
+		email          => $self->{email},
+		module         => $self->module,
+		module_path    => $self->module_path,
+		repo_name      => $self->repo_name,
+		template_path  => $self->distribution_template_dir,
+		year           => ( localtime )[5] + 1900,
 		};
 
 	$hash;
 	}
 
-sub _src_to_dest {
-	state $mt = Mojo::Template->var(1);
+=back
 
-	my( $self, $source, $base, $dest ) = @_;
-		say "File source: $source";
+=head2 Utility methods
 
-	my $rendered = $mt->render_file( $base, $self->template_vars );
+=over 4
 
-		say "File dest: $dest";
+=item * config_file_path
 
-	}
-
-=item distribution_template_dir
-
-Returns the name of the directory that contains the distribution
-templates.
-
-The default path is F<~/.templates/modules>. You can override this in
-a subclass.
+Returns the path to the config file. By default, this is the value of
+C<config_file_name> under the home directory.
 
 =cut
 
-sub distribution_template_dir {
-	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
-	$path = readlink($path) if -l $path;
-
-	croak "Couldn't find templates at $path!\n" unless -d $path;
-
-	$path;
+sub config_file_path ( $class ) {
+	catfile( $ENV{HOME}, $class->config_file_name )
 	}
 
-=item description
+=item * get_config
 
-Returns the description of the module.
+Returns a hash reference of the config values. These are the values
+that apply across runs.
 
-The default name is C<TODO: describe this module>. You can override
-this in a subclass.
+First, this populates a hash with C<default_config>, then replaces
+values from the config file (C<config_file_path>).
+
+This version uses L<Config::IniFiles>
+
+	[author]
+	name=...
+	email=...
+
+	[templates]
+	line_start=...
+	tag_end=...
+	tag_start=...
 
 =cut
 
-sub description {
-	$_[0]->{description} = $_[1] if defined $_[1];
-	$_[0]->{description} || 'TODO: describe this module'
+sub get_config ( $class ) {
+	my $file = $class->config_file_path;
+
+	my $hash = $class->default_config;
+
+	my @table = (
+		[ qw( author_name  author    name       ) ],
+		[ qw( author_email author    email      ) ],
+		[ qw( line_start   templates line_start ) ],
+		[ qw( tag_end      templates tag_end    ) ],
+		[ qw( tag_start    templates tag_start  ) ],
+		);
+
+	if( -e $file ) {
+		require Config::IniFiles;
+		my $config = Config::IniFiles->new( -file => $file );
+
+		foreach my $row ( @table ) {
+			my( $config_name, $section, $field ) = @_;
+			$hash->{$config_name} = $config->val( $section, $field )
+				if $config->exists( $section, $field );
+			}
+		}
+
+	$hash;
 	}
 
-=item repo_name
+=item * prompt( MESSAGE )
 
-Returns the repo_name for the project. This defaults to the module
-name all lowercased with C<::> replaced with C<->. You can override
-this in a subclass.
+Show the user MESSAGE, grap a line from STDIN, and return it. If the
+session is not interactive, this returns nothing.
+
+Most things that prompt should have a default value in the case that
+C<prompt> cannot work.
 
 =cut
 
-sub repo_name {
-	$_[0]->{repo_name} = $_[1] if defined $_[1];
-	$_[0]->{repo_name} // $_[0]->module =~ s/::/-/gr
-	}
+sub prompt ( $class, @args ) {
+	return unless is_interactive();
 
-=item module_template_basename
-
-Returns the name of the file that is the module.
-
-The default name is F<Foo.pm>. You can override this in a subclass.
-
-=cut
-
-sub module_template_basename {
-	"Foo.pm";
-	}
-
-=item module( [ MODULE_NAME ] )
-
-Return the module name. With an argument, set the module name.
-
-=cut
-
-sub module {
-	$_[0]->{module} = $_[1] if defined $_[1];
-	$_[0]->{module};
-	}
-
-=item module_path()
-
-Return the module path under F<lib/>. You must have set C<module>
-already.
-
-=cut
-
-sub module_path {
-	my @parts = split /::/, $_[0]->{module};
-	return unless @parts;
-	$parts[-1] .= '.pm';
-	my $path = catfile( @parts );
-	}
-
-=item dist( [ DIST_NAME ] )
-
-Return the dist name. With an argument, set the module name.
-
-=cut
-
-sub dist {
-	$_[0]->{dist} = $_[1] if defined $_[1];
-	$_[0]->{dist};
-	}
-
-=item module_to_distname( MODULE_NAME )
-
-Take a module name, such as C<Foo::Bar>, and turn it into a
-distribution name, such as C<Foo-Bar>.
-
-=cut
-
-sub module_to_distname {
-	my( $self, $module ) = @_;
-
-	my $dist   = $module; $dist =~ s/::/-/g;
-	my $file   = $module; $file =~ s/.*:://; $file .= ".pm";
-
-	return $dist;
-	}
-
-=item prompt( MESSAGE )
-
-Show the user MESSAGE, grap a line from STDIN, and return it.
-
-=cut
-
-sub prompt {
-	print join "\n", @_;
+	print join "\n", @args;
 	print "> ";
 
-	my $line = <STDIN>;
-	chomp $line;
+	chomp( my $line = <STDIN> );
 	$line;
 	}
 
