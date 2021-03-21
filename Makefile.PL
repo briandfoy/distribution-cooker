@@ -72,6 +72,7 @@ my %WriteMakefile = (
 		'Carp'                  => '0',
 		'Cwd'                   => '0',
 		'File::Spec::Functions' => '0',
+		'IO::Interactive'       => '0',
 		'strict'                => '0',
 		'subs'                  => '0',
 		'vars'                  => '0',
