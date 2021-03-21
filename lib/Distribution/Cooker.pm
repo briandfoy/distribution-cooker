@@ -203,7 +203,9 @@ specify a description, it prompts you.
 
 =cut
 
-sub run ( $class, $module, $description, $repo_name ) {
+sub run ( $class, @args ) {
+	my( $module, $description, $repo_name ) = @args;
+
 	my $self = $class->new;
 	$self->init;
 
