@@ -28,14 +28,41 @@ Distribution::Cooker - Create a Perl module directory from your own templates
 
 =head1 SYNOPSIS
 
+	# The dist_cooker is a wrapper for the module
+	% dist_cooker Foo::Bar "This module does that" repo_slug
+
+	# The dist_cooker can prompt for what's missing
+	% dist_cooker Foo::Bar
+	Description> This module does that
+	Repo name> foo-bar
+
+	# the script just passes @ARGV to the module
 	use Distribution::Cooker;
+	Distribution::Cooker->run( @ARGV );
 
-	Distribution::Cooker->run( ... );
-
-	# most of this should go through the dist_cooker sketch
+	# if you don't like something, subclass and override
+	package Local::Distribution::Cooker {
+		use parent qw(Distribution::Cooker);
+		sub config_file_path  { ... }
+		}
 
 =head1 DESCRIPTION
 
+This module takes a directory of templates and processes them with
+L<Mojo::Template>. It's specifically tooled toward Perl modules, and
+the templates are given a set of variables.
+
+The templates have special values for C<line_start>, C<tag_start>, and
+C<tag_end> since the default L<Mojo::Template> values get confused when
+there's Perl code outside them.
+
+Tags use « (U+00AB) and » (U+00BB), and whole lines use ϕ (U+03D5):
+
+    This is the « $module » module
+
+    ϕ This is a line of Perl code
+
+My own templates are at L<https://github.com/briandfoy/module_templates>.
 
 =head2 Process methods
 
