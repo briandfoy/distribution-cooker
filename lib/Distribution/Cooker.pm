@@ -131,7 +131,7 @@ sub cook ( $self ) {
 		->tag_end(    $self->{tag_end}    )
 		->vars(1);
 	foreach my $file ( $files->@* ) {
-		my $new_file = abs2rel( $file, $self->distribution_template_dir );
+		my $new_file = abs2rel( $file, $self->template_dir );
 
 		if( -d $file ) {
 			make_path( $new_file );
@@ -231,8 +231,8 @@ specify a description, it prompts you.
 
 =cut
 
-sub run ( $class, @args ) {
-	my( $module, $description, $repo_name ) = @args;
+sub run ( $class, $module, @args ) {
+	my( $description, $repo_name ) = @args;
 
 	my $self = $class->new;
 	$self->init;
@@ -303,7 +303,7 @@ sub description ( $class, @args ) {
 	$class->{description} || 'TODO: describe this module'
 	}
 
-=item * distribution_template_dir
+=item * template_dir
 
 Returns the path for the distribution templates. The default is
 F<$ENV{HOME}/.templates/modules>. If that path is a symlink, this
@@ -311,7 +311,7 @@ returns that target of that link.
 
 =cut
 
-sub distribution_template_dir {
+sub template_dir {
 	my $path = catfile( $ENV{HOME}, '.templates', 'modules' );
 	$path = readlink($path) if -l $path;
 
@@ -439,14 +439,12 @@ sub repo_name ( $class, @args ) {
 =item * template_files
 
 Return the list of templates to process. These are all the files in
-the C<distribution_template_dir> excluding F<.git>, F<.svn>, F<CVS>,
+the C<template_dir> excluding F<.git>, F<.svn>, F<CVS>,
 and C<.infra>.
 
 =cut
 
 sub template_files ( $self ) {
-	my $template_dir = $self->distribution_template_dir;
-
 	my @files;
 	my $wanted = sub {
 		if( /\A(\.git|\.svn|CVS|\.infra)\b/ ) {
@@ -456,7 +454,7 @@ sub template_files ( $self ) {
 		push @files, $File::Find::name;
 		};
 
-	find( $wanted, $self->distribution_template_dir );
+	find( $wanted, $self->template_dir );
 
 	return \@files;
 	}
@@ -508,7 +506,7 @@ sub template_vars ( $self ) {
 		module         => $self->module,
 		module_path    => $self->module_path,
 		repo_name      => $self->repo_name,
-		template_path  => $self->distribution_template_dir,
+		template_path  => $self->template_dir,
 		year           => ( localtime )[5] + 1900,
 		};
 
