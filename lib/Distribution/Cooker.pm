@@ -588,7 +588,7 @@ C<prompt> cannot work.
 
 =cut
 
-sub prompt ( $class, @args ) {
+sub prompt ( @args ) {
 	return unless is_interactive();
 
 	print join "\n", @args;
