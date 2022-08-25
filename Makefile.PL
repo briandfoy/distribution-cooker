@@ -63,7 +63,8 @@ my %WriteMakefile = (
 		},
 
 	'TEST_REQUIRES' => {
-		'Test::More' => '1',
+		'Perl::Version' => '0',
+		'Test::More'    => '1',
 		},
 
 	'PREREQ_PM'     => {
