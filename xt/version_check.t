@@ -1,12 +1,13 @@
 #!perl
 use v5.26;
 
+use Test::More 1;
+
 eval 'use Module::Extract::DeclaredMinimumPerl';
 plan skip_all => 'Module::Extract::DeclaredMinimumPerl required for this test' if $@;
 
 use Mojo::Util qw(dumper);
 use Perl::Version;
-use Test::More 1;
 
 diag( <<"HERE" );
 	Module:   @{[ module_minimum()   ]}
