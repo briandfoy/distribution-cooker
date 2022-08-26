@@ -570,7 +570,7 @@ sub get_config ( $class ) {
 		my $config = Config::IniFiles->new( -file => $file );
 
 		foreach my $row ( @table ) {
-			my( $config_name, $section, $field ) = @_;
+			my( $config_name, $section, $field ) = @$row;
 			$hash->{$config_name} = $config->val( $section, $field )
 				if $config->exists( $section, $field );
 			}
