@@ -113,15 +113,11 @@ F<CVS> directories.
 sub cook ( $self ) {
 	my $dir = lc $self->dist;
 
-my $cwd = Cwd::getcwd;
-say "cwd: <$cwd> dir <$dir>";
-say "<$dir> exists: " . (0 + -d $dir);
+	my $cwd = Cwd::getcwd;
 
 	make_path( $dir );
 	croak "<$dir> does not exist" unless -d $dir;
 	chdir $dir        or croak "chdir $dir: $!";
-
-	my $cwd = cwd();
 
 	my $files = $self->template_files;
 
