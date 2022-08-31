@@ -78,3 +78,4 @@ Distribution-.*
 \A\.github\b
 cooker_report.txt
 \s\d(\.|$)
+\.gitattributes\b
