@@ -89,7 +89,6 @@ This uses L<Mojo::Template> to render the templates, and various
 settings. The values from C<template_vars> are passed to the templates
 and its keys are available as named variables.
 
-
 By default, these tag settings are used because these characters
 are unlikely to appear in Perl code:
 
