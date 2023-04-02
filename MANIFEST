@@ -1,4 +1,3 @@
-.gitattributes
 Changes
 examples/module_cooker
 INSTALL.SKIP
@@ -18,7 +17,6 @@ t/pod.t
 t/pod_coverage.t
 t/run.t
 t/test_manifest
-templates/.gitattributes
 templates/.github/workflows/linux.yml
 templates/.github/workflows/macos.yml
 templates/.github/workflows/release.yml
