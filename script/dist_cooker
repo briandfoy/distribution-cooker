@@ -27,8 +27,6 @@ customizable yet.
 
 =over 4
 
-=item C<ttree> (from Template) is in C</usr/local/bin/ttree>
-
 =item Your distribution template directory is F<~/.templates/dist_cooker>
 
 =item Your module template name is F<lib/Foo.pm>
