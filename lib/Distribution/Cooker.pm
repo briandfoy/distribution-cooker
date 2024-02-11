@@ -4,7 +4,7 @@ use utf8;
 package Distribution::Cooker;
 use experimental qw(signatures);
 
-our $VERSION = '2.002';
+our $VERSION = '2.003';
 
 use Carp                  qw(croak carp);
 use Cwd;
