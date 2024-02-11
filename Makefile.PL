@@ -69,7 +69,7 @@ my %WriteMakefile = (
 
 	'PREREQ_PM'     => {
 		'Config::IniFiles'      => '0',
-		'Mojo::Template'        => '0',
+		'Mojolicious'           => '9.35',
 		'Carp'                  => '0',
 		'Cwd'                   => '0',
 		'File::Spec::Functions' => '0',

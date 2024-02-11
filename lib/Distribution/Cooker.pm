@@ -140,7 +140,7 @@ sub cook ( $self ) {
 
 		my $contents = decode( 'UTF-8', Mojo::File->new( $file )->slurp );
 		my $rendered = $mt->vars(1)->render( $contents, $vars );
-		Mojo::File->new( $new_file )->spurt( encode( 'UTF-8', $rendered ) );
+		Mojo::File->new( $new_file )->spew( encode( 'UTF-8', $rendered ) );
 		}
 
 	make_path dirname($new);
