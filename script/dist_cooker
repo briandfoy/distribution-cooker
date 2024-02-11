@@ -16,6 +16,8 @@ dist_cooker - create a Perl distribution skeleton from personal templates
 
 	# from the command line, to create a distribution for Module::Name
 	% dist_cooker Module::Name
+	Description> ...
+	Repository> ...
 
 =head1 DESCRIPTION
 
