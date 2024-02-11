@@ -346,7 +346,7 @@ sub _git_user_name {
 	}
 
 sub _git_user_email {
-	my $email = `git config user.name`;
+	my $email = `git config user.email`;
 	$email =~ s/\R//g;
 	trim( $email ) if defined $email;
 	$email;
