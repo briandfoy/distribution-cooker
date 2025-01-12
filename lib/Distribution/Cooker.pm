@@ -79,7 +79,7 @@ customizable yet.
 
 =over 4
 
-=item * Your distribution template directory is F<~/.templates/dist_cooker>
+=item * Your distribution template directory is F<~/.templates/modules>
 
 =item * Your module template name is F<lib/Foo.pm>, which will be moved into place later
 
