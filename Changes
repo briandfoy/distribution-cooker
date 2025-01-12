@@ -30,7 +30,6 @@ Revision history for Perl module Distribution::Cooker
 0.11 - 2008-10-28
 	* Bump to a release version.
 
-
 0.10_01 - 2008-08-14
 	* This is the modulino version of my module_cooker
 	script, complete with my set of templates.
