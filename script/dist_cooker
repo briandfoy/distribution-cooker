@@ -68,6 +68,10 @@ The author name is the first true value of the DIST_COOKER_EMAIL
 environment variable, the value of `git config user.email`, or a
 default value.
 
+=item github_user
+
+The username for the GitHub account that will host this repository
+
 =item module         => the package name (Foo::Bar)
 
 Taken from the command-line arguments
