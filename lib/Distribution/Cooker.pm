@@ -276,7 +276,7 @@ search and replace.
 
 sub default_author_email ( $class ) { 'serpico@example.com' }
 sub default_author_name  ( $class ) { 'Frank Serpico' }
-sub default_github_user  ( $class ) { 'GITHUB_USER' }
+sub default_github_user  ( $class ) { $ENV{'GITHUB_USER'} }
 
 =item * description( [ DESCRIPTION ] )
 
